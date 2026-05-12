@@ -1,0 +1,201 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account identity and role configuration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "username": { "type": "string" },
+        "role": { "type": "string", "enum": ["SuperAdmin", "SubAdmin", "Associate"] },
+        "permissions": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["id", "name", "username", "role"]
+    },
+    "Lead": {
+      "title": "Client Lead",
+      "description": "Real estate lead asset with property preferences",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "leadId": { "type": "string" },
+        "project": { "type": "string" },
+        "status": { "type": "string" },
+        "segment": { "type": "string" },
+        "source": { "type": "string" },
+        "propertyType": { "type": "string" },
+        "budget": { "type": "string" },
+        "preferredSiteVisit": { "type": "string" },
+        "plotSize": { "type": "string" },
+        "walkinSource": { "type": "string" },
+        "employmentType": { "type": "string" },
+        "occupation": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "remarks": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "project", "status", "assignedTo"]
+    },
+    "Task": {
+      "title": "Operational Task",
+      "description": "Time-bound engagement task assigned to a team member",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "assignedTo": { "type": "string" },
+        "assignedBy": { "type": "string" },
+        "leadId": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "In Progress", "Ongoing", "Complete"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "dueDate", "assignedTo", "assignedBy", "type", "status"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "Internal communication message between users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "text": { "type": "string" },
+        "taskId": { "type": "string" },
+        "read": { "type": "boolean" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "senderId", "receiverId", "text", "read", "timestamp"]
+    },
+    "Notification": {
+      "title": "System Notification",
+      "description": "Real-time alert for task assignment or lead activity",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "title", "message", "read"]
+    },
+    "SkippedLead": {
+      "title": "Skipped Lead Log",
+      "description": "Information about records excluded during synchronization",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "source": { "type": "string" },
+        "row": { "type": "number" },
+        "reason": { "type": "string" },
+        "info": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "source", "row", "reason", "timestamp"]
+    },
+    "SyncLog": {
+      "title": "Synchronization Log",
+      "description": "Record of a background sheet synchronization cycle",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["Success", "Failed"] },
+        "imported": { "type": "number" },
+        "updated": { "type": "number" },
+        "identical": { "type": "number" },
+        "skipped": { "type": "number" },
+        "duration": { "type": "number" },
+        "error": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "status"]
+    },
+    "AuditLog": {
+      "title": "Action Audit Trail",
+      "description": "Historical record of user actions within the CRM",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "string" },
+        "entityId": { "type": "string" },
+        "entityName": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "username", "action", "details", "timestamp"]
+    },
+    "sheetConfigs": {
+      "title": "Sheet Configuration",
+      "description": "External Google Sheets sources for synchronization",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "url": { "type": "string" },
+        "sheetIndex": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "mappings": { 
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "lastSynced": { "type": "string" }
+      },
+      "required": ["id", "name", "url", "sheetIndex"]
+    }
+  },
+  "firestore": {
+    "/sheetConfigs/{configId}": {
+      "schema": "sheetConfigs",
+      "description": "Collection of external sheet sources"
+    },
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Permanent user registry"
+    },
+    "leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Central lead portfolio"
+    },
+    "tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Operational task board"
+    },
+    "chats/{chatId}": {
+      "schema": "ChatMessage",
+      "description": "Internal internal communication messages"
+    },
+    "notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User alert stream"
+    },
+    "skipped_leads/{leadId}": {
+      "schema": "SkippedLead",
+      "description": "Stream of skipped sheet records"
+    },
+    "sync_logs/{logId}": {
+      "schema": "SyncLog",
+      "description": "Journal of synchronization results"
+    },
+    "audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Persistent audit trail for compliance and tracking"
+    },
+    "settings/{settingId}": {
+      "schema": "object",
+      "description": "Global application settings (e.g., appearance, configuration)"
+    }
+  }
+}

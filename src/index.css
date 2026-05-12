@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Montserrat:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant+Garamond", serif;
+  --font-sans: "Montserrat", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-accent: #C1884A;
+  --color-accent-hover: #AB7842;
+  --color-primary: #C1884A;
+  --color-primary-foreground: #FFFFFF;
+  --color-success: #059669;
+  --color-warning: #D97706;
+  --color-danger: #DC2626;
+  --color-info: #2563EB;
+}
+
+:root {
+  --color-bg-main: #0F1115;
+  --color-bg-sidebar: #16191E;
+  --color-bg-card: #1E2228;
+  --color-text-main: #FFFFFF;
+  --color-text-dim: #94A3B8;
+  --color-text-sidebar: #FFFFFF;
+  --color-text-sidebar-dim: #94A3B8;
+  --color-border-main: #2D333B;
+}
+
+[data-theme='light'] {
+  --color-bg-main: #FDFDFD;
+  --color-bg-sidebar: #0F172A;
+  --color-bg-card: #FFFFFF;
+  --color-text-main: #0F172A;
+  --color-text-dim: #475569;
+  --color-text-sidebar: #FFFFFF;
+  --color-text-sidebar-dim: #94A3B8;
+  --color-border-main: #E2E8F0;
+}
+
+body {
+  background-color: var(--color-bg-main);
+  color: var(--color-text-main);
+  @apply font-sans antialiased transition-colors duration-300;
+}
+
+.serif {
+  @apply font-serif;
+}

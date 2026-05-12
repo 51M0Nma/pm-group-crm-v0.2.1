@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitives ---
+    function isSignedIn() { return request.auth != null; }
+    function isEmailVerified() { return request.auth.token.email_verified == true; }
+    function userId() { return request.auth.uid; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // --- Role Helpers ---
+    function getUserData(uid) { return get(/databases/$(database)/documents/users/$(uid)).data; }
+    function hasRole(uid, role) { return isSignedIn() && getUserData(uid).role == role; }
+    function isSuperAdmin() { return hasRole(userId(), 'SuperAdmin'); }
+    function isSubAdmin() { return hasRole(userId(), 'SubAdmin'); }
+    function isAssociate() { return hasRole(userId(), 'Associate'); }
+    function isAdmin() { return isSuperAdmin() || isSubAdmin(); }
+
+    // --- Validation Helpers ---
+    function isValidUser(data) {
+      return data.id == userId() 
+        && data.name is string && data.name.size() <= 100
+        && data.username is string && data.username.size() <= 50
+        && data.role in ['SuperAdmin', 'SubAdmin', 'Associate']
+        && (data.get('permissions', []) is list);
+    }
+
+    function isValidLead(data) {
+      return data.keys().hasAll(['id', 'name', 'project', 'status', 'assignedTo'])
+        && data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 128
+        && data.project is string && data.project.size() <= 128
+        && data.status is string && data.status.size() <= 50
+        && data.assignedTo is string && data.assignedTo.size() <= 128
+        && (data.get('email', '') is string)
+        && (data.get('phone', '') is string)
+        && (data.get('remarks', []) is list);
+    }
+
+    function isValidTask(data) {
+      return data.keys().hasAll(['id', 'title', 'dueDate', 'assignedTo', 'assignedBy', 'type', 'status'])
+        && data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() <= 256
+        && data.status in ['Pending', 'In Progress', 'Ongoing', 'Complete']
+        && data.assignedTo is string && data.assignedTo.size() <= 128;
+    }
+
+    // --- COLLECTION RULES ---
+
+    // 0. Connection Test
+    match /system/connection_test {
+      allow read: if true;
+    }
+
+    // 1. Users
+    match /users/{uid} {
+      allow get: if true; // Allow checking if a specific user exists
+      allow list: if (request.query.limit <= 1) || isAdmin(); // Allow checking if empty or finding one user for login
+      allow create: if (incoming().role == 'SuperAdmin' && incoming().username == 'initial_admin') || (isSignedIn() && isAdmin() && isValidUser(incoming()));
+      allow update: if isSignedIn() && (
+        (userId() == uid && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'username', 'permissions'])) ||
+        (isSuperAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'permissions']))
+      );
+    }
+
+    // 2. Leads
+    match /leads/{leadId} {
+      allow read: if isSignedIn() && (isAdmin() || existing().assignedTo == userId());
+      allow create: if isSignedIn() && isAdmin() && isValidLead(incoming());
+      allow update: if isSignedIn() && (
+        (isAdmin() && isValidLead(incoming())) ||
+        (existing().assignedTo == userId() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'remarks', 'updatedAt']))
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // 3. Tasks
+    match /tasks/{taskId} {
+      allow read: if isSignedIn() && (isAdmin() || existing().assignedTo == userId() || existing().assignedBy == userId());
+      allow create: if isSignedIn() && (isAdmin() || incoming().assignedBy == userId()) && isValidTask(incoming());
+      allow update: if isSignedIn() && (
+        (isAdmin() && isValidTask(incoming())) ||
+        (existing().assignedTo == userId() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+      );
+    }
+
+    // 4. Chats
+    match /chats/{chatId} {
+      allow read, write: if isSignedIn() && (incoming().senderId == userId() || incoming().receiverId == userId() || existing().senderId == userId() || existing().receiverId == userId());
+    }
+
+    // 5. Notifications
+    match /notifications/{notifId} {
+      allow read: if isSignedIn() && existing().userId == userId();
+      allow update: if isSignedIn() && existing().userId == userId() && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+      allow create: if isSignedIn(); // Allow system to create but usually these are server-side or triggers
+    }
+
+    // 6. Logs & Settings
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+    }
+
+    match /sync_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+    }
+
+    match /skipped_leads/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+    }
+
+    match /sheetConfigs/{configId} {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+  }
+}
